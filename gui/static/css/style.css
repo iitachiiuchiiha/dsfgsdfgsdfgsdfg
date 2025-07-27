@@ -1,0 +1,132 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+:root {
+    --bg-dark: #161A25; --bg-light: #1E222D; --border-color: #2A2E39;
+    --text-primary: #D1D4DC; --text-secondary: #848E9C; --accent: #3B82F6;
+}
+body {
+    font-family: 'Inter', sans-serif; background-color: var(--bg-dark);
+    color: var(--text-primary); margin: 0; overflow: hidden;
+}
+.container {
+    display: flex; flex-direction: column; height: 100vh;
+    padding: 1rem; box-sizing: border-box;
+}
+.app-header h1 {
+    text-align: center; margin: 0 0 1rem 0; font-weight: 500;
+    font-size: 1.25rem; color: var(--text-secondary);
+}
+.app-main {
+    flex-grow: 1; display: flex; flex-direction: column; gap: 1rem;
+}
+.controls-wrapper {
+    display: flex; flex-wrap: wrap; gap: 1.5rem; padding: 0.5rem 1rem;
+    background-color: var(--bg-light); border-radius: 0.5rem;
+    border: 1px solid var(--border-color);
+}
+.control-group {
+    display: flex; align-items: center; gap: 0.75rem;
+}
+.control-group label {
+    font-size: 0.875rem; color: var(--text-secondary); font-weight: 500;
+}
+#chart-container {
+    flex-grow: 1;
+    border-radius: 0.5rem;
+    background-color: var(--bg-light);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 2px 16px 0 rgba(0,0,0,0.10);
+    position: relative;
+    min-height: 350px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: stretch;
+    align-items: stretch;
+    transition: box-shadow 0.2s;
+}
+
+/* Lightweight Charts area */
+#lightweight-chart {
+    width: 100% !important;
+    height: 100% !important;
+    min-height: 320px;
+    border-radius: 0.5rem;
+    background: transparent;
+    z-index: 1;
+}
+
+/* Chart toolbar (optional, for future custom controls) */
+.chart-toolbar {
+    position: absolute;
+    top: 10px;
+    right: 16px;
+    z-index: 10;
+    display: flex;
+    gap: 0.5rem;
+}
+.chart-toolbar button {
+    background: var(--bg-dark);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.75rem;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+}
+.chart-toolbar button:hover {
+    background: var(--accent);
+    color: #fff;
+}
+}
+.placeholder {
+    color: var(--text-secondary); display: flex; flex-direction: column;
+    align-items: center; justify-content: center; height: 100%; gap: 1rem;
+}
+.spinner {
+    width: 40px; height: 40px; border: 4px solid #444;
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+select {
+    background-color: var(--bg-dark); border: 1px solid var(--border-color);
+    border-radius: 0.375rem; padding: 0.38rem 2em 0.38rem 0.75rem;
+    font-size: 0.875rem; color: var(--text-primary);
+    -webkit-appearance: none; appearance: none;
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23848E9C%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22/%3E%3C/svg%3E');
+    background-repeat: no-repeat; background-position: right .7em top 50%;
+    background-size: .65em auto; min-width: 120px;
+}
+
+/* Match Choices.js symbol selector to timeframe selector */
+.choices.symbol-choices {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    min-width: 120px;
+    font-size: 0.875rem;
+    color: var(--text-primary);
+}
+.choices.symbol-choices .choices__inner {
+    background-color: var(--bg-dark);
+    border: none;
+    border-radius: 0.375rem;
+    min-height: 38px;
+    padding: 0.38rem 2em 0.38rem 0.75rem;
+    color: var(--text-primary);
+    box-shadow: none;
+}
+.choices.symbol-choices .choices__list--dropdown {
+    background-color: var(--bg-dark);
+    border: 1px solid var(--border-color);
+    border-radius: 0.375rem;
+    color: var(--text-primary);
+}
+.choices.symbol-choices .choices__item--selectable {
+    color: var(--text-primary);
+}
+.choices.symbol-choices .choices__placeholder {
+    color: var(--text-secondary);
+    opacity: 1;
+}

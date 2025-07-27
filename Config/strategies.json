@@ -1,0 +1,16 @@
+{
+  "ict_model": {
+    "enabled": true,
+    "parameters": {
+      "param1": "value1"
+    }
+  },
+  "elliott_waves": {
+    "enabled": false,
+    "parameters": {}
+  },
+  "sk_system": {
+    "enabled": false,
+    "parameters": {}
+  }
+}

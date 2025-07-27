@@ -1,0 +1,43 @@
+Advanced_Trading_System/
+│
+├── 1_Strategies/
+│   ├── __init__.py
+│   ├── base_strategy.py      # A base class for all strategies
+│   ├── elliott_waves.py
+│   ├── ict_model.py
+│   └── sk_system.py
+│
+├── 2_Data_Handler/
+│   ├── __init__.py
+│   └── data_fetcher.py       # Module to get historical and real-time data
+│
+├── 3_Backtesting_Engine/
+│   ├── __init__.py
+│   └── backtester.py         # The core engine to test strategies on past data
+│
+├── 4_Risk_Management/
+│   ├── __init__.py
+│   └── risk_manager.py       # Handles stop-loss, take-profit, position sizing
+│
+├── 5_Execution_Handler/
+│   ├── __init__.py
+│   └── broker_api.py         # Connects to the broker (replaces api_handler.py)
+│
+├── 6_GUI/
+│   ├── static/
+│   │   ├── css/
+│   │   │   └── style.css
+│   │   └── js/
+│   │       └── main.js
+│   ├── templates/
+│   │   └── index.html
+│   └── app.py                # The Flask/FastAPI backend for the UI
+│
+├── Config/
+│   ├── config.ini            # Configuration file for API keys, settings, etc.
+│   └── strategies.json       # To enable/disable and configure strategies
+│
+├── Logs/
+│   └── trading_log.log       # To log all trades and system actions
+│
+└── main.py                   # The main script to run the whole system

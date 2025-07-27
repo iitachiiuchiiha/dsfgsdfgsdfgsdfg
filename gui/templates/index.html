@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Advanced Trading System</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header class="app-header"><h1>Advanced Trading System ✨</h1></header>
+        <main class="app-main">
+            <div class="controls-wrapper">
+                <div class="control-group">
+                    <label for="symbol-select">Symbol:</label>
+                    <select id="symbol-select"></select>
+                </div>
+                <div class="control-group">
+                    <label for="timeframe-select">Timeframe:</label>
+                    <select id="timeframe-select">
+                        <option value="M1">1 Minute</option><option value="M5">5 Minutes</option>
+                        <option value="M15">15 Minutes</option><option value="H1" selected>1 Hour</option>
+                        <option value="H4">4 Hours</option><option value="D1">1 Day</option>
+                    </select>
+                </div>
+            </div>
+            <div id="chart-container">
+                <div class="chart-toolbar">
+                    <button id="draw-trend">Trend Line</button>
+                    <button id="draw-hline">Horizontal Line</button>
+                    <button id="draw-rect">Rectangle</button>
+                    <button id="draw-remove">Remove All</button>
+                </div>
+                <div class="placeholder"><p>Select a symbol to begin.</p></div>
+            </div>
+        </main>
+    </div>
+    <!-- Lightweight Charts library -->
+    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
