@@ -1,5 +1,3 @@
-/* gui/static/css/style.css */
-
 :root {
     --bg-color: #131722;
     --panel-bg: #1e222d;
@@ -10,177 +8,33 @@
     --yellow: #ffac33;
     --blue: #2962ff;
 }
-
-body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
-    margin: 0;
-    padding: 0;
-    overflow: hidden;
-}
-
-.container {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-}
-
-header {
-    display: flex;
-    align-items: center;
-    padding: 10px 20px;
-    background-color: var(--panel-bg);
-    border-bottom: 1px solid var(--border-color);
-}
-
-header h1 {
-    margin: 0;
-    font-size: 1.5em;
-}
-
-#status-indicator {
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    margin-left: 15px;
-    transition: background-color 0.3s ease;
-}
-
+body { background-color: var(--bg-color); color: var(--text-color); font-family: sans-serif; margin: 0; overflow: hidden; }
+.container { display: flex; flex-direction: column; height: 100vh; }
+header { display: flex; align-items: center; justify-content: space-between; padding: 10px 20px; background-color: var(--panel-bg); border-bottom: 1px solid var(--border-color); }
+header h1 { margin: 0; font-size: 1.5em; }
+.controls-container { display: flex; align-items: center; gap: 10px; }
+.symbol-selector { position: relative; }
+#symbol-input, #timeframe-select { background-color: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 8px 12px; font-size: 0.9em; }
+#symbol-input { width: 200px; }
+.symbol-results-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background-color: #2a2e39; border: 1px solid var(--border-color); border-top: none; max-height: 200px; overflow-y: auto; z-index: 1000; }
+.symbol-results-list div { padding: 8px 12px; cursor: pointer; }
+.symbol-results-list div:hover { background-color: #3c4352; }
+#load-chart-btn { background-color: var(--blue); color: white; border: none; border-radius: 4px; padding: 8px 16px; font-size: 0.9em; font-weight: bold; cursor: pointer; transition: background-color 0.2s; }
+#load-chart-btn:hover { background-color: #3d7eff; }
+#status-indicator { width: 15px; height: 15px; border-radius: 50%; margin-left: 15px; }
 .status-disconnected { background-color: var(--red); }
 .status-connected { background-color: var(--green); }
-
-.main-grid {
-    display: grid;
-    grid-template-columns: 2fr 1fr; /* 2/3 pour le chart, 1/3 pour les infos */
-    gap: 10px;
-    padding: 10px;
-    flex-grow: 1;
-    height: calc(100% - 70px);
-}
-
-.chart-panel, .info-panel {
-    background-color: var(--panel-bg);
-    border-radius: 8px;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-
-#chart-container {
-    width: 100%;
-    height: 100%;
-}
-
-/* --- Tabs --- */
-.tabs {
-    display: flex;
-    background-color: var(--bg-color);
-}
-
-.tab-link {
-    background-color: transparent;
-    border: none;
-    color: var(--text-color);
-    padding: 14px 16px;
-    font-size: 1em;
-    cursor: pointer;
-    transition: background-color 0.3s, color 0.3s;
-    border-bottom: 3px solid transparent;
-}
-
-.tab-link:hover {
-    background-color: #2a2e39;
-}
-
-.tab-link.active {
-    border-bottom: 3px solid var(--blue);
-    color: white;
-}
-
-.tab-content {
-    display: none;
-    flex-grow: 1;
-    flex-direction: column;
-    overflow: hidden;
-}
-
-.tab-content.active {
-    display: flex;
-}
-
-.console-header {
-    padding: 10px;
-    font-weight: bold;
-    background-color: #2a2e39;
-    border-bottom: 1px solid var(--border-color);
-}
-
-.console-content {
-    padding: 10px;
-    overflow-y: auto;
-    flex-grow: 1;
-    font-family: 'Courier New', Courier, monospace;
-    font-size: 0.9em;
-}
-
-/* --- Log Console --- */
-.log-message {
-    padding: 2px 0;
-    border-bottom: 1px solid #2a2e3955;
-}
-.log-message .timestamp {
-    color: #888;
-    margin-right: 10px;
-}
-.log-message.info .message { color: var(--text-color); }
-.log-message.warning .message { color: var(--yellow); }
-.log-message.error .message { color: var(--red); font-weight: bold; }
-.log-message.signal .message { color: var(--blue); font-weight: bold; }
-
-/* --- Signal List --- */
-#signal-list {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-
-.signal-card {
-    background-color: #2a2e39;
-    border-radius: 5px;
-    padding: 15px;
-    border-left: 5px solid;
-}
-.signal-card.buy { border-left-color: var(--green); }
-.signal-card.sell { border-left-color: var(--red); }
-
-.signal-card-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 10px;
-}
-.signal-card-header .symbol { font-size: 1.2em; font-weight: bold; }
-.signal-card-header .signal-type {
-    padding: 4px 8px;
-    border-radius: 4px;
-    color: white;
-}
-.signal-type.buy { background-color: var(--green); }
-.signal-type.sell { background-color: var(--red); }
-
-.signal-card-body {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-    font-size: 0.9em;
-}
-.signal-card-body div {
-    display: flex;
-    flex-direction: column;
-}
-.signal-card-body .label {
-    color: #888;
-    font-size: 0.8em;
-    margin-bottom: 2px;
-}
+.main-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; padding: 10px; flex-grow: 1; height: calc(100% - 70px); }
+.chart-panel { background-color: var(--panel-bg); border-radius: 8px; overflow: hidden; display: flex; justify-content: center; align-items: center; }
+#chart-placeholder { font-size: 1.2em; color: #555; }
+.info-panel { background-color: var(--panel-bg); border-radius: 8px; overflow: hidden; display: flex; flex-direction: column; }
+.tabs { display: flex; background-color: var(--bg-color); }
+.tab-link { background: transparent; border: none; color: var(--text-color); padding: 14px 16px; cursor: pointer; border-bottom: 3px solid transparent; }
+.tab-link.active { border-bottom: 3px solid var(--blue); }
+.tab-content { display: none; flex-grow: 1; flex-direction: column; overflow: hidden; }
+.tab-content.active { display: flex; }
+.console-header { padding: 10px; font-weight: bold; background-color: #2a2e39; }
+.console-content { padding: 10px; overflow-y: auto; flex-grow: 1; font-family: 'Courier New', monospace; font-size: 0.9em; }
+.log-message { padding: 2px 0; }
+.log-message .timestamp { color: #888; margin-right: 10px; }
+.log-message.error .message { color: var(--red); }

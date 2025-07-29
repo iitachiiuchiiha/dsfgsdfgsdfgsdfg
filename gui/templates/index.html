@@ -4,44 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Trading Bot Dashboard</title>
-    
-    <!-- Lightweight Charts Library -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    
-    <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-    
-    <!-- Custom JavaScript - 'defer' kaykhellih ytsenna l'HTML ykmal 3ad ytdemarri -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
     <script src="{{ url_for('static', filename='js/main.js') }}" defer></script>
 </head>
 <body>
     <div class="container">
         <header>
             <h1>Trading Bot Dashboard</h1>
+            <div class="controls-container">
+                <div class="symbol-selector">
+                    <input type="text" id="symbol-input" placeholder="Chercher un symbole...">
+                    <div id="symbol-results" class="symbol-results-list"></div>
+                </div>
+                <select id="timeframe-select">
+                    <option value="M1">1 Minute</option>
+                    <option value="M5">5 Minutes</option>
+                    <option value="M15">15 Minutes</option>
+                    <option value="M30">30 Minutes</option>
+                    <option value="H1" selected>1 Heure</option>
+                    <option value="H4">4 Heures</option>
+                    <option value="D1">Journalier</option>
+                </select>
+                <button id="load-chart-btn">Load Chart</button>
+            </div>
             <div id="status-indicator" class="status-disconnected"></div>
         </header>
         <main class="main-grid">
             <div id="chart-container" class="chart-panel">
-                <!-- Le chart sera injecté ici par JavaScript -->
+                <div id="chart-placeholder">Veuillez sélectionner un symbole et cliquer sur "Load Chart".</div>
             </div>
             <div class="info-panel">
                 <div class="tabs">
-                    <button class="tab-link active" onclick="openTab(event, 'logs')">Logs</button>
-                    <button class="tab-link" onclick="openTab(event, 'signals')">Trade Signals</button>
+                    <button class="tab-link active" onclick="app.openTab(event, 'logs')">Logs</button>
+                    <button class="tab-link">Trade Signals</button>
                 </div>
-
                 <div id="logs" class="tab-content active">
                     <div class="console-header">Bot Logs</div>
-                    <div id="log-console" class="console-content">
-                        <!-- Les messages de log seront ajoutés ici -->
-                    </div>
-                </div>
-
-                <div id="signals" class="tab-content">
-                    <div class="console-header">Active Signals</div>
-                    <div id="signal-list" class="console-content">
-                        <!-- Les cartes de signaux de trade seront ajoutées ici -->
-                    </div>
+                    <div id="log-console" class="console-content"></div>
                 </div>
             </div>
         </main>

@@ -1,71 +1,46 @@
 # gui/app.py
 
-import time
-from flask import Flask, render_template
-from threading import Thread, Event
+from flask import Flask, render_template, request, jsonify
+from data_handler.mt5_data_handler import MT5DataHandler
 
-# --- Importation des composants du bot ---
-from backtesting_engine.backtester import MockDataHandler
-from strategies.Forex_Price_Action_Scalping import ForexPriceActionScalping
-from risk_management.risk_manager import MockRiskManager
-
-# --- Initialisation de l'application Flask ---
+# --- Initialisation ---
 app = Flask(__name__)
 
-# --- Définition du Thread du Bot ---
-bot_thread = None
-thread_stop_event = Event()
+# On crée une seule instance du DataHandler pour toute l'application
+try:
+    data_handler = MT5DataHandler()
+except ConnectionError as e:
+    print(f"ERREUR CRITIQUE: {e}")
+    data_handler = None
 
-class BotThread(Thread):
-    def __init__(self, api_instance):
-        self.api = api_instance
-        super(BotThread, self).__init__()
-
-    def run(self):
-        """La boucle principale du bot."""
-        self.api.log_to_gui("Bot thread started. Initializing components...")
-        
-        data_handler = MockDataHandler(chart_notifier=self.api.send_chart_data)
-        risk_manager = MockRiskManager()
-        strategy = ForexPriceActionScalping(
-            data_handler=data_handler,
-            risk_manager=risk_manager,
-            gui_notifier=self.api.log_to_gui,
-            trade_notifier=self.api.send_trade_signal
-        )
-        
-        self.api.log_to_gui("Bot is running. Waiting for trading signals...")
-        while not thread_stop_event.is_set():
-            try:
-                for pair in strategy.pairs:
-                    strategy.check_signal(pair)
-                time.sleep(1)
-            except Exception as e:
-                self.api.log_to_gui(f"An error occurred in bot loop: {e}", level="error")
-                time.sleep(5)
-        self.api.log_to_gui("Bot thread has been stopped.", level="warning")
-
-# === CORRECTION IMPORTANTE ===
-# La fonction doit accepter deux arguments: flask_app et api_instance
-def start_bot_thread(flask_app, api_instance):
-    """
-    Fonction pour démarrer le bot. Elle accepte maintenant l'app Flask et l'API
-    comme arguments pour éviter le problème de 'context'.
-    """
-    global bot_thread
-    
-    # On utilise le contexte de l'application pour s'assurer que tout fonctionne correctement
-    with flask_app.app_context():
-        if bot_thread is None or not bot_thread.is_alive():
-            print("Starting Bot Thread...")
-            thread_stop_event.clear()
-            # On passe l'instance de l'API directement au constructeur du thread
-            bot_thread = BotThread(api_instance=api_instance)
-            bot_thread.daemon = True
-            bot_thread.start()
-
-# --- Définition des Routes Flask ---
+# --- Route principale qui sert l'interface ---
 @app.route('/')
 def index():
-    """Sert la page principale (index.html)."""
     return render_template('index.html')
+
+# --- API Routes (appelées par JavaScript via fetch) ---
+
+@app.route('/api/symbols')
+def get_symbols():
+    """Retourne la liste de tous les symboles disponibles depuis MT5."""
+    if not data_handler:
+        return jsonify({"error": "MT5 non connecté"}), 500
+    
+    symbols = data_handler.get_all_symbols()
+    return jsonify(symbols)
+
+@app.route('/api/historical_data')
+def get_historical_data():
+    """Retourne les données historiques pour un symbole et un timeframe donnés."""
+    symbol = request.args.get('symbol')
+    timeframe = request.args.get('timeframe')
+    
+    if not symbol or not timeframe:
+        return jsonify({"error": "Symbole ou timeframe manquant"}), 400
+        
+    if not data_handler:
+        return jsonify({"error": "MT5 non connecté"}), 500
+
+    print(f"Flask: Récupération des données pour {symbol} ({timeframe})")
+    data = data_handler.get_historical_bars(symbol, timeframe, 300) # On charge 300 bougies
+    return jsonify(data)
