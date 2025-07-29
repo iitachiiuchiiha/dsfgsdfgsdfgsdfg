@@ -1,171 +1,114 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // Les éléments dyal l'HTML
-    const symbolSelect = document.getElementById('symbol-select');
-    const timeframeSelect = document.getElementById('timeframe-select');
+// gui/static/js/main.js
+
+document.addEventListener('DOMContentLoaded', () => {
+    // --- Configuration ---
     const chartContainer = document.getElementById('chart-container');
+    const logConsole = document.getElementById('log-console');
+    const signalList = document.getElementById('signal-list');
+    const statusIndicator = document.getElementById('status-indicator');
 
-    // Variables dyal l'chart
-    let chart = null;
-    let candleSeries = null;
-    let lastCandle = null; // Kan7tafdo b akher chem3a
-    
-    // Timers
-    let countdownInterval = null;
-    let tickInterval = null; 
+    // --- Initialisation du Chart ---
+    const chart = LightweightCharts.createChart(chartContainer, {
+        width: chartContainer.clientWidth,
+        height: chartContainer.clientHeight,
+        layout: { backgroundColor: '#131722', textColor: '#d1d4dc' },
+        grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
+        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+        rightPriceScale: { borderColor: '#2a2e39' },
+        timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
+    });
 
-    function getTimeframeInSeconds(timeframe) {
-        const unit = timeframe.slice(-1);
-        const value = parseInt(timeframe.slice(0, -1));
-        if (unit === 'M') return value * 60;
-        if (unit === 'H') return value * 3600;
-        if (unit === 'D') return value * 86400;
-        return 0;
-    }
+    const candlestickSeries = chart.addCandlestickSeries({
+        upColor: '#26a69a', downColor: '#ef5350',
+        borderDownColor: '#ef5350', borderUpColor: '#26a69a',
+        wickDownColor: '#ef5350', wickUpColor: '#26a69a',
+    });
 
-    function clearChart() {
-        if (countdownInterval) clearInterval(countdownInterval);
-        if (tickInterval) clearInterval(tickInterval);
-        countdownInterval = null;
-        tickInterval = null;
-        lastCandle = null;
+    // Gérer le redimensionnement du chart
+    new ResizeObserver(entries => {
+        if (entries.length === 0 || entries[0].target !== chartContainer) { return; }
+        const newRect = entries[0].contentRect;
+        chart.applyOptions({ width: newRect.width, height: newRect.height });
+    }).observe(chartContainer);
 
-        const countdownContainer = document.getElementById('countdown-container');
-        if (countdownContainer) countdownContainer.style.display = 'none';
-
-        if (chart) {
-            chart.remove();
-            chart = null;
-            candleSeries = null;
+    // --- Logique des Tabs ---
+    window.openTab = (evt, tabName) => {
+        let i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("tab-content");
+        for (i = 0; i < tabcontent.length; i++) {
+            tabcontent[i].style.display = "none";
+            tabcontent[i].classList.remove("active");
         }
-        const old = document.getElementById('lightweight-chart');
-        if (old) old.remove();
-    }
-
-    // Function jdida katjib live price w kat'actualisi l'chart
-    function startLiveUpdate(symbol) {
-        if (tickInterval) clearInterval(tickInterval);
-
-        tickInterval = setInterval(() => {
-            fetch(`/api/get_ticks/${symbol}`)
-                .then(response => {
-                    if (!response.ok) return null; // Ila kan error f server, nskto
-                    return response.json();
-                })
-                .then(tickData => {
-                    // Kanchofo wach kayna data jdida w wach l'chart ba9i
-                    if (tickData && tickData.price && candleSeries && lastCandle) {
-                        
-                        // ***** START OF THE FIX *****
-                        // Hada howa l'7el bach l'chart it7errek b7al TradingView
-                        
-                        // 1. Kan'7esbo l'high w low jdad dyal l'chem3a
-                        lastCandle.high = Math.max(lastCandle.high, tickData.price);
-                        lastCandle.low = Math.min(lastCandle.low, tickData.price);
-                        
-                        // 2. Kan'beddlo l'prix dyal l'ighla9 (close)
-                        lastCandle.close = tickData.price;
-                        
-                        // 3. Kan'sifto l'candle l'mbeddla l'chart bach t'actualisa
-                        candleSeries.update(lastCandle);
-                        // ***** END OF THE FIX *****
-                    }
-                })
-                .catch(error => { /* Nskto 3la les erreurs dyal ticks */ });
-        }, 1200); // Kol 1.2 tania
-    }
-
-    function updateChart() {
-        const selectedSymbol = symbolSelect.value;
-        const selectedTimeframe = timeframeSelect.value;
-
-        clearChart();
-
-        if (selectedSymbol && selectedTimeframe) {
-            chartContainer.querySelector('.placeholder')?.remove();
-            const chartDiv = document.createElement('div');
-            chartDiv.id = 'lightweight-chart';
-            chartContainer.appendChild(chartDiv);
-            chartDiv.innerHTML = `<div class="spinner-wrapper"><div class="spinner"></div></div>`;
-
-            fetch(`/api/get_chart/${selectedSymbol}/${selectedTimeframe}`)
-                .then(response => response.json())
-                .then(data => {
-                    chartDiv.innerHTML = '';
-                    if (data.error || !data.ohlcv || data.ohlcv.length === 0) {
-                        chartDiv.innerHTML = `<div class="placeholder"><p>${data.error || "No chart data."}</p></div>`;
-                        return;
-                    }
-                    
-                    chart = LightweightCharts.createChart(chartDiv, {
-                        layout: { background: { color: 'transparent' }, textColor: '#D1D4DC', fontFamily: 'Inter, sans-serif' },
-                        grid: { vertLines: { color: '#23273a' }, horzLines: { color: '#23273a' } },
-                        width: chartDiv.offsetWidth, height: chartDiv.offsetHeight,
-                        timeScale: { borderColor: '#2A2E39', timeVisible: true, secondsVisible: false },
-                        rightPriceScale: { borderColor: '#2A2E39' },
-                        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-                    });
-
-                    candleSeries = chart.addCandlestickSeries({
-                        upColor: '#26a69a', downColor: '#ef5350', borderVisible: false,
-                        wickUpColor: '#26a69a', wickDownColor: '#ef5350',
-                    });
-                    
-                    candleSeries.setData(data.ohlcv);
-                    lastCandle = data.ohlcv[data.ohlcv.length - 1];
-                    
-                    // Kheddem l'countdown dyal l'chem3a
-                    const timeframeInSeconds = getTimeframeInSeconds(selectedTimeframe);
-                    const countdownContainer = document.getElementById('countdown-container');
-                    const countdownEl = document.getElementById('candle-countdown');
-                    
-                    // ** L'7el dyal l'Countdown **
-                    if (timeframeInSeconds > 0 && countdownContainer && countdownEl) {
-                        const candleCloseTime = (lastCandle.time + timeframeInSeconds) * 1000;
-                        
-                        const updateCountdown = () => {
-                            const remaining = candleCloseTime - new Date().getTime();
-                            if (remaining <= 0) {
-                                countdownEl.textContent = "00:00";
-                                clearInterval(countdownInterval);
-                                setTimeout(updateChart, 1500); // N3awdo njibo chart jdid
-                                return;
-                            }
-                            const minutes = Math.floor((remaining / 1000) / 60);
-                            const seconds = Math.floor((remaining / 1000) % 60);
-                            countdownEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
-                        };
-                        updateCountdown();
-                        countdownInterval = setInterval(updateCountdown, 1000);
-                        countdownContainer.style.display = 'flex'; // Kanbeyyno l'countdown
-                    }
-
-                    // Kheddem l'live update dyal l'prix
-                    startLiveUpdate(selectedSymbol);
-
-                    new ResizeObserver(() => chart.timeScale().fitContent()).observe(chartDiv);
-                    chart.timeScale().fitContent();
-
-                })
-                .catch(error => {
-                    console.error("Chart Fetch Error:", error);
-                    chartDiv.innerHTML = `<div class="placeholder"><p>Error loading chart.</p></div>`;
-                });
+        tablinks = document.getElementsByClassName("tab-link");
+        for (i = 0; i < tablinks.length; i++) {
+            tablinks[i].className = tablinks[i].className.replace(" active", "");
         }
+        document.getElementById(tabName).style.display = "flex";
+        document.getElementById(tabName).classList.add("active");
+        evt.currentTarget.className += " active";
     }
-    
-    fetch('/api/get_symbols')
-        .then(res => res.json())
-        .then(symbols => {
-            symbolSelect.innerHTML = '<option value="">-- Choose Symbol --</option>';
-            symbols.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s;
-                option.textContent = s;
-                symbolSelect.appendChild(option);
-            });
-            if (window.Choices) { new Choices(symbolSelect, { searchEnabled: true, itemSelectText: '' }); }
-        });
+    // Activer le premier tab par défaut
+    document.querySelector('.tab-link').click();
 
-    symbolSelect.addEventListener('change', updateChart);
-    timeframeSelect.addEventListener('change', updateChart);
+
+    // === FONCTIONS GLOBALES POUR PYTHON ===
+    // Ces fonctions sont appelées par le code Python via `window.evaluate_js`
+
+    window.addLogMessage = (message, level = 'info') => {
+        const timestamp = new Date().toLocaleTimeString();
+        const logEntry = document.createElement('div');
+        logEntry.className = `log-message ${level}`;
+        logEntry.innerHTML = `<span class="timestamp">${timestamp}</span> <span class="message">${message}</span>`;
+        logConsole.appendChild(logEntry);
+        logConsole.scrollTop = logConsole.scrollHeight;
+    };
+
+    window.addTradeSignal = (data) => {
+        addTradeSignalCard(data);
+        drawTradeOnChart(data);
+    };
+
+    window.updateChart = (data) => {
+        candlestickSeries.update(data);
+    };
+
+    // --- Fonctions d'aide pour l'affichage ---
+    function addTradeSignalCard(data) {
+        const card = document.createElement('div');
+        const signalClass = data.signal.toLowerCase();
+        card.className = `signal-card ${signalClass}`;
+        card.innerHTML = `
+            <div class="signal-card-header">
+                <span class="symbol">${data.symbol}</span>
+                <span class="signal-type ${signalClass}">${data.signal}</span>
+            </div>
+            <div class="signal-card-body">
+                <div><span class="label">Entry Price</span><span>${data.entry_price}</span></div>
+                <div><span class="label">Risk/Reward</span><span>1 : ${data.risk_reward}</span></div>
+                <div><span class="label">Stop Loss</span><span>${data.stop_loss} (${data.sl_pips} pips)</span></div>
+                <div><span class="label">Take Profit</span><span>${data.take_profit} (${data.tp_pips} pips)</span></div>
+            </div>`;
+        signalList.prepend(card);
+    }
+
+    function drawTradeOnChart(trade) {
+        const slLine = { price: trade.stop_loss, color: '#ef5350', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'SL' };
+        const tpLine = { price: trade.take_profit, color: '#26a69a', lineWidth: 2, lineStyle: LightweightCharts.LineStyle.Dashed, axisLabelVisible: true, title: 'TP' };
+        candlestickSeries.createPriceLine(slLine);
+        candlestickSeries.createPriceLine(tpLine);
+        candlestickSeries.setMarkers([
+            ...candlestickSeries.markers(),
+            {
+                time: (new Date(trade.breakout_candle_time).getTime() / 1000),
+                position: trade.signal === 'BUY' ? 'belowBar' : 'aboveBar',
+                color: '#2962ff',
+                shape: trade.signal === 'BUY' ? 'arrowUp' : 'arrowDown',
+                text: `${trade.signal} @ ${trade.entry_price}`
+            }
+        ]);
+    }
+
+    // Indiquer que l'application est connectée
+    statusIndicator.className = 'status-connected';
+    addLogMessage('Desktop application UI loaded.', 'info');
 });

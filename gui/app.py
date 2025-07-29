@@ -1,79 +1,71 @@
-from flask import Flask, render_template, Response
-import json
-import MetaTrader5 as mt5
-import pandas as pd
-import numpy as np
-import sys
-import os
-import traceback
-from pandas import Timestamp
+# gui/app.py
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from data_handler.data_fetcher import get_all_symbols, get_market_data, get_tick_data
+import time
+from flask import Flask, render_template
+from threading import Thread, Event
 
+# --- Importation des composants du bot ---
+from backtesting_engine.backtester import MockDataHandler
+from strategies.Forex_Price_Action_Scalping import ForexPriceActionScalping
+from risk_management.risk_manager import MockRiskManager
+
+# --- Initialisation de l'application Flask ---
 app = Flask(__name__)
 
-class NumpyEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, Timestamp): return obj.isoformat()
-        if isinstance(obj, np.integer): return int(obj)
-        elif isinstance(obj, np.floating): return float(obj)
-        elif isinstance(obj, np.ndarray): return obj.tolist()
-        return super(NumpyEncoder, self).default(obj)
+# --- Définition du Thread du Bot ---
+bot_thread = None
+thread_stop_event = Event()
 
-app.json_encoder = NumpyEncoder
+class BotThread(Thread):
+    def __init__(self, api_instance):
+        self.api = api_instance
+        super(BotThread, self).__init__()
 
-TIMEFRAME_MAP = {
-    "M1": mt5.TIMEFRAME_M1, "M5": mt5.TIMEFRAME_M5, "M15": mt5.TIMEFRAME_M15,
-    "H1": mt5.TIMEFRAME_H1, "H4": mt5.TIMEFRAME_H4, "D1": mt5.TIMEFRAME_D1,
-}
+    def run(self):
+        """La boucle principale du bot."""
+        self.api.log_to_gui("Bot thread started. Initializing components...")
+        
+        data_handler = MockDataHandler(chart_notifier=self.api.send_chart_data)
+        risk_manager = MockRiskManager()
+        strategy = ForexPriceActionScalping(
+            data_handler=data_handler,
+            risk_manager=risk_manager,
+            gui_notifier=self.api.log_to_gui,
+            trade_notifier=self.api.send_trade_signal
+        )
+        
+        self.api.log_to_gui("Bot is running. Waiting for trading signals...")
+        while not thread_stop_event.is_set():
+            try:
+                for pair in strategy.pairs:
+                    strategy.check_signal(pair)
+                time.sleep(1)
+            except Exception as e:
+                self.api.log_to_gui(f"An error occurred in bot loop: {e}", level="error")
+                time.sleep(5)
+        self.api.log_to_gui("Bot thread has been stopped.", level="warning")
 
+# === CORRECTION IMPORTANTE ===
+# La fonction doit accepter deux arguments: flask_app et api_instance
+def start_bot_thread(flask_app, api_instance):
+    """
+    Fonction pour démarrer le bot. Elle accepte maintenant l'app Flask et l'API
+    comme arguments pour éviter le problème de 'context'.
+    """
+    global bot_thread
+    
+    # On utilise le contexte de l'application pour s'assurer que tout fonctionne correctement
+    with flask_app.app_context():
+        if bot_thread is None or not bot_thread.is_alive():
+            print("Starting Bot Thread...")
+            thread_stop_event.clear()
+            # On passe l'instance de l'API directement au constructeur du thread
+            bot_thread = BotThread(api_instance=api_instance)
+            bot_thread.daemon = True
+            bot_thread.start()
+
+# --- Définition des Routes Flask ---
 @app.route('/')
 def index():
+    """Sert la page principale (index.html)."""
     return render_template('index.html')
-
-@app.route('/api/get_symbols')
-def api_get_symbols():
-    symbols = get_all_symbols()
-    return Response(json.dumps(symbols), mimetype='application/json')
-
-@app.route('/api/get_chart/<symbol_name>/<timeframe_str>')
-def api_get_chart(symbol_name, timeframe_str):
-    try:
-        timeframe = TIMEFRAME_MAP.get(timeframe_str, mt5.TIMEFRAME_H1)
-        num_candles = 2000 if timeframe <= mt5.TIMEFRAME_M15 else 800
-        
-        df = get_market_data(symbol_name, timeframe, num_candles)
-        if df is None or df.empty:
-            return Response(json.dumps({"error": "No chart data available."}), mimetype='application/json')
-
-        ohlcv = [
-            {
-                'time': int(row['time'].timestamp()), 'open': float(row['open']),
-                'high': float(row['high']), 'low': float(row['low']),
-                'close': float(row['close']), 'volume': float(row['tick_volume'])
-            } for i, row in df.iterrows()
-        ]
-        return Response(json.dumps({'ohlcv': ohlcv}), mimetype='application/json')
-    except Exception as e:
-        print(f"!!! SERVER ERROR in /api/get_chart: {e} !!!\n{traceback.format_exc()}")
-        return Response(json.dumps({"error": "Server Error"}), mimetype='application/json', status=500)
-
-@app.route('/api/get_ticks/<symbol_name>')
-def api_get_ticks(symbol_name):
-    try:
-        df_ticks = get_tick_data(symbol_name, num_ticks=1)
-        if df_ticks is None or df_ticks.empty:
-            return Response(json.dumps({}), mimetype='application/json')
-        
-        last_time = df_ticks['time'].iloc[-1]
-        last_price = df_ticks['last_price'].iloc[-1]
-        
-        # Kansta3mlo l'wa9t dyal l'candle l'akhira bach l'update maykhserch l'chart
-        tick_data = { 'time': int(last_time.timestamp()), 'price': float(last_price) }
-        
-        return Response(json.dumps(tick_data, cls=NumpyEncoder), mimetype='application/json')
-    except Exception as e:
-        # Hado machi erreurs khaybin, kan ignoriwhom bach may3emroch l'console
-        # print(f"!!! SERVER ERROR in /api/get_ticks: {e} !!!")
-        return Response(json.dumps({"error": "No new tick"}), mimetype='application/json', status=500)

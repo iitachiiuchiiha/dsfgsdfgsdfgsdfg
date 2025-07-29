@@ -1,41 +1,45 @@
-# File: 3_Backtesting_Engine/backtester.py
+# backtesting_engine/backtester.py (Version Mock)
 import pandas as pd
+import numpy as np
+import time
 
-class Backtester:
-    def __init__(self, initial_capital=10000.0):
-        self.initial_capital = initial_capital
-        self.cash = initial_capital
-        self.position = 0
-        self.trades = []
+class MockDataHandler:
+    def __init__(self, chart_notifier=None):
+        self.chart_notifier = chart_notifier # Pour envoyer les données au chart
+        self.last_prices = {'EUR/USD': 1.0750, 'GBP/USD': 1.2550}
+        self.history = {pair: [] for pair in self.last_prices.keys()}
 
-    def run(self, data_with_signals: pd.DataFrame):
-        print("\n--- Starting Backtest ---")
+    def get_latest_bars(self, symbol, timeframe, n_bars):
+        # ... (même logique de génération de bougie)
+        price = self.last_prices[symbol]
+        open_price = price
+        # ... etc
+        close_price = np.random.uniform(low_price, high_price)
+        self.last_prices[symbol] = close_price
         
-        for i in range(len(data_with_signals)):
-            signal = data_with_signals['signal'].iloc[i]
-            price = data_with_signals['close'].iloc[i]
-            
-            # Ila kan signal BUY o ma3ndnach position
-            if signal == 1 and self.position == 0:
-                self.position = self.cash / price # Chri b ga3 l-cash
-                print(f"{data_with_signals['time'].iloc[i]} | BUY at {price:.5f}")
-                self.cash = 0
+        new_candle_data = {
+            'time': pd.to_datetime('now', utc=True),
+            'open': open_price, 'high': high_price,
+            'low': low_price, 'close': close_price
+        }
+        self.history[symbol].append(new_candle_data)
+        
+        # === AJOUT IMPORTANT ===
+        # Envoyer la nouvelle bougie à l'interface via le notificateur
+        if self.chart_notifier:
+            candle_for_chart = {
+                'time': int(new_candle_data['time'].timestamp()), # Timestamp UNIX
+                'open': new_candle_data['open'],
+                'high': new_candle_data['high'],
+                'low': new_candle_data['low'],
+                'close': new_candle_data['close'],
+            }
+            self.chart_notifier(candle_for_chart)
+        # =======================
 
-            # Ila kan signal SELL o 3ndna position
-            elif signal == -1 and self.position > 0:
-                self.cash = self.position * price
-                print(f"{data_with_signals['time'].iloc[i]} | SELL at {price:.5f} | P/L: {(self.cash - self.initial_capital):.2f}")
-                self.position = 0
-        
-        # Ila bqat position m7lola f lkher
-        if self.position > 0:
-            self.cash = self.position * data_with_signals['close'].iloc[-1]
-            
-        final_profit = self.cash - self.initial_capital
-        final_return = (final_profit / self.initial_capital) * 100
-        
-        print("\n--- Backtest Finished ---")
-        print(f"Initial Capital: ${self.initial_capital:,.2f}")
-        print(f"Final Capital:   ${self.cash:,.2f}")
-        print(f"Profit/Loss:     ${final_profit:,.2f}")
-        print(f"Return:          {final_return:.2f}%")
+        if len(self.history[symbol]) > n_bars + 5:
+            self.history[symbol] = self.history[symbol][-n_bars:]
+
+        df = pd.DataFrame(self.history[symbol])
+        df.set_index('time', inplace=True)
+        return df

@@ -2,42 +2,49 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Advanced Trading System</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css"/>
-    <link rel="stylesheet" href="/static/css/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trading Bot Dashboard</title>
+    <!-- Lightweight Charts -->
+    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Socket.IO Client -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
 </head>
 <body>
     <div class="container">
-        <header class="app-header"><h1>Advanced Trading System ✨</h1></header>
-        <main class="app-main">
-            <div class="controls-wrapper">
-                <div class="control-group">
-                    <label for="symbol-select">Symbol:</label>
-                    <select id="symbol-select"></select>
-                </div>
-                <div class="control-group">
-                    <label for="timeframe-select">Timeframe:</label>
-                    <select id="timeframe-select">
-                        <option value="M1">1 Minute</option>
-                        <option value="M5">5 Minutes</option>
-                        <option value="M15">15 Minutes</option>
-                        <option value="H1" selected>1 Hour</option>
-                        <option value="H4">4 Hours</option>
-                        <option value="D1">1 Day</option>
-                    </select>
-                </div>
-                <div class="control-group" id="countdown-container" style="display: none; margin-left: auto;">
-                    <label style="color: var(--text-secondary);">Closes in:</label>
-                    <div id="candle-countdown">--:--</div>
-                </div>
+        <header>
+            <h1>Trading Bot Dashboard</h1>
+            <div id="status-indicator" class="status-disconnected"></div>
+        </header>
+        <main class="main-grid">
+            <div id="chart-container" class="chart-panel">
+                <!-- Le chart sera injecté ici par JavaScript -->
             </div>
-            <div id="chart-container">
-                <div class="placeholder"><p>Select a symbol to begin.</p></div>
+            <div class="info-panel">
+                <div class="tabs">
+                    <button class="tab-link active" onclick="openTab(event, 'logs')">Logs</button>
+                    <button class="tab-link" onclick="openTab(event, 'signals')">Trade Signals</button>
+                </div>
+
+                <div id="logs" class="tab-content active">
+                    <div class="console-header">Bot Logs</div>
+                    <div id="log-console" class="console-content">
+                        <!-- Les messages de log seront ajoutés ici -->
+                    </div>
+                </div>
+
+                <div id="signals" class="tab-content">
+                    <div class="console-header">Active Signals</div>
+                    <div id="signal-list" class="console-content">
+                        <!-- Les cartes de signaux de trade seront ajoutées ici -->
+                    </div>
+                </div>
             </div>
         </main>
     </div>
-    <script src="https://unpkg.com/lightweight-charts@4.1.1/dist/lightweight-charts.standalone.production.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script src="/static/js/main.js"></script>
+
+    <!-- Custom JavaScript -->
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
 </body>
 </html>

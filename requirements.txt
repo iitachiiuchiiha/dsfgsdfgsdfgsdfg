@@ -1,0 +1,6 @@
+Flask
+Flask-SocketIO
+pandas
+numpy
+scipy
+simple-websocket
