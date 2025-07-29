@@ -1,15 +1,15 @@
 from flask import Flask, render_template, Response
+import json
 import MetaTrader5 as mt5
 import pandas as pd
 import numpy as np
-import json
 import sys
 import os
 import traceback
 from pandas import Timestamp
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from data_handler.data_fetcher import get_all_symbols, get_market_data
+from data_handler.data_fetcher import get_all_symbols, get_market_data, get_tick_data
 
 app = Flask(__name__)
 
@@ -19,7 +19,9 @@ class NumpyEncoder(json.JSONEncoder):
         if isinstance(obj, np.integer): return int(obj)
         elif isinstance(obj, np.floating): return float(obj)
         elif isinstance(obj, np.ndarray): return obj.tolist()
-        return json.JSONEncoder.default(self, obj)
+        return super(NumpyEncoder, self).default(obj)
+
+app.json_encoder = NumpyEncoder
 
 TIMEFRAME_MAP = {
     "M1": mt5.TIMEFRAME_M1, "M5": mt5.TIMEFRAME_M5, "M15": mt5.TIMEFRAME_M15,
@@ -32,7 +34,8 @@ def index():
 
 @app.route('/api/get_symbols')
 def api_get_symbols():
-    return Response(json.dumps(get_all_symbols()), mimetype='application/json')
+    symbols = get_all_symbols()
+    return Response(json.dumps(symbols), mimetype='application/json')
 
 @app.route('/api/get_chart/<symbol_name>/<timeframe_str>')
 def api_get_chart(symbol_name, timeframe_str):
@@ -44,21 +47,33 @@ def api_get_chart(symbol_name, timeframe_str):
         if df is None or df.empty:
             return Response(json.dumps({"error": "No chart data available."}), mimetype='application/json')
 
-        # Prepare OHLCV data for Lightweight Charts
-        ohlcv = []
-        for i, row in df.iterrows():
-            ohlcv.append({
-                'time': int(row['time'].timestamp()),
-                'open': float(row['open']),
-                'high': float(row['high']),
-                'low': float(row['low']),
-                'close': float(row['close']),
-                'volume': float(row['tick_volume'])
-            })
-        json_response = json.dumps({'ohlcv': ohlcv})
-        return Response(json_response, mimetype='application/json')
-
+        ohlcv = [
+            {
+                'time': int(row['time'].timestamp()), 'open': float(row['open']),
+                'high': float(row['high']), 'low': float(row['low']),
+                'close': float(row['close']), 'volume': float(row['tick_volume'])
+            } for i, row in df.iterrows()
+        ]
+        return Response(json.dumps({'ohlcv': ohlcv}), mimetype='application/json')
     except Exception as e:
-        print(f"!!! SERVER ERROR: {e} !!!")
-        print(traceback.format_exc())
-        return Response(json.dumps({"error": f"Server Error: Check terminal for details."}), mimetype='application/json')
+        print(f"!!! SERVER ERROR in /api/get_chart: {e} !!!\n{traceback.format_exc()}")
+        return Response(json.dumps({"error": "Server Error"}), mimetype='application/json', status=500)
+
+@app.route('/api/get_ticks/<symbol_name>')
+def api_get_ticks(symbol_name):
+    try:
+        df_ticks = get_tick_data(symbol_name, num_ticks=1)
+        if df_ticks is None or df_ticks.empty:
+            return Response(json.dumps({}), mimetype='application/json')
+        
+        last_time = df_ticks['time'].iloc[-1]
+        last_price = df_ticks['last_price'].iloc[-1]
+        
+        # Kansta3mlo l'wa9t dyal l'candle l'akhira bach l'update maykhserch l'chart
+        tick_data = { 'time': int(last_time.timestamp()), 'price': float(last_price) }
+        
+        return Response(json.dumps(tick_data, cls=NumpyEncoder), mimetype='application/json')
+    except Exception as e:
+        # Hado machi erreurs khaybin, kan ignoriwhom bach may3emroch l'console
+        # print(f"!!! SERVER ERROR in /api/get_ticks: {e} !!!")
+        return Response(json.dumps({"error": "No new tick"}), mimetype='application/json', status=500)

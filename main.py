@@ -5,7 +5,7 @@ if __name__ == '__main__':
     webview.create_window(
         'Advanced Trading System',
         app,
-        width=1200,
+        width=1280,
         height=800,
         resizable=True,
         min_size=(900, 700)
