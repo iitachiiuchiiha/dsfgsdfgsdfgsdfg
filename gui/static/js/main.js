@@ -1,30 +1,47 @@
 // gui/static/js/main.js
 
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Configuration ---
+    // --- Configuration des éléments du DOM ---
     const chartContainer = document.getElementById('chart-container');
     const logConsole = document.getElementById('log-console');
     const signalList = document.getElementById('signal-list');
     const statusIndicator = document.getElementById('status-indicator');
 
-    // --- Initialisation du Chart ---
+    // --- Initialisation du Chart avec le thème DARK ---
     const chart = LightweightCharts.createChart(chartContainer, {
         width: chartContainer.clientWidth,
         height: chartContainer.clientHeight,
-        layout: { backgroundColor: '#131722', textColor: '#d1d4dc' },
-        grid: { vertLines: { color: '#2a2e39' }, horzLines: { color: '#2a2e39' } },
-        crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
-        rightPriceScale: { borderColor: '#2a2e39' },
-        timeScale: { borderColor: '#2a2e39', timeVisible: true, secondsVisible: false },
+        layout: {
+            backgroundColor: '#131722', // Couleur de fond principale
+            textColor: '#d1d4dc',       // Couleur du texte
+        },
+        grid: {
+            vertLines: { color: '#2a2e39' }, // Lignes verticales de la grille
+            horzLines: { color: '#2a2e39' }, // Lignes horizontales de la grille
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        rightPriceScale: {
+            borderColor: '#485158', // Bordure de l'échelle des prix
+        },
+        timeScale: {
+            borderColor: '#485158', // Bordure de l'échelle de temps
+            timeVisible: true,
+            secondsVisible: false,
+        },
     });
 
     const candlestickSeries = chart.addCandlestickSeries({
-        upColor: '#26a69a', downColor: '#ef5350',
-        borderDownColor: '#ef5350', borderUpColor: '#26a69a',
-        wickDownColor: '#ef5350', wickUpColor: '#26a69a',
+        upColor: '#26a69a',      // Couleur des bougies haussières
+        downColor: '#ef5350',    // Couleur des bougies baissières
+        borderDownColor: '#ef5350',
+        borderUpColor: '#26a69a',
+        wickDownColor: '#ef5350',
+        wickUpColor: '#26a69a',
     });
-
-    // Gérer le redimensionnement du chart
+    
+    // Gérer le redimensionnement du chart pour qu'il reste responsive
     new ResizeObserver(entries => {
         if (entries.length === 0 || entries[0].target !== chartContainer) { return; }
         const newRect = entries[0].contentRect;
@@ -46,14 +63,12 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById(tabName).style.display = "flex";
         document.getElementById(tabName).classList.add("active");
         evt.currentTarget.className += " active";
-    }
-    // Activer le premier tab par défaut
+    };
+    // Activer le premier tab par défaut au démarrage
     document.querySelector('.tab-link').click();
 
-
-    // === FONCTIONS GLOBALES POUR PYTHON ===
-    // Ces fonctions sont appelées par le code Python via `window.evaluate_js`
-
+    // === FONCTIONS GLOBALES APPELÉES PAR PYTHON ===
+    
     window.addLogMessage = (message, level = 'info') => {
         const timestamp = new Date().toLocaleTimeString();
         const logEntry = document.createElement('div');
@@ -72,7 +87,18 @@ document.addEventListener('DOMContentLoaded', () => {
         candlestickSeries.update(data);
     };
 
+    window.loadHistoricalData = (data) => {
+        if (data && data.length > 0) {
+            console.log(`Loading ${data.length} historical bars...`);
+            candlestickSeries.setData(data);
+            chart.timeScale().fitContent();
+        } else {
+            console.log("Received empty historical data.");
+        }
+    };
+
     // --- Fonctions d'aide pour l'affichage ---
+
     function addTradeSignalCard(data) {
         const card = document.createElement('div');
         const signalClass = data.signal.toLowerCase();
@@ -108,7 +134,6 @@ document.addEventListener('DOMContentLoaded', () => {
         ]);
     }
 
-    // Indiquer que l'application est connectée
     statusIndicator.className = 'status-connected';
-    addLogMessage('Desktop application UI loaded.', 'info');
+    addLogMessage('Desktop application UI loaded. Waiting for bot connection...', 'info');
 });
